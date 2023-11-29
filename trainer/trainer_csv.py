@@ -127,7 +127,7 @@ def train(optimizer,ds,model,steps = None):
         l_cum = np.roll(l_cum, 1)
         l_acc = np.roll(l_acc, 1)
             
-        sys.stdout.write('\r'+("step: " +str(step+1) + "/" + " loss: " + str(np.sum(l_cum)/25)+ " acc: " + str(np.sum(l_acc)/25) + " memory: " + str(round(tf.config.experimental.get_memory_info('GPU:0')["peak"]*1e-6)) + "   "))
+        sys.stdout.write('\r'+("step: " +str(step+1) + "/" + " loss: " + str(np.sum(l_cum)/25)+ " acc: " + str(np.sum(l_acc)/25) + "   "))
         if step > steps:
             break
     
