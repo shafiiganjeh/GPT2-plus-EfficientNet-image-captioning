@@ -139,7 +139,7 @@ class MHA(tf.keras.layers.Layer):
             x = tf.nn.dropout(x, drop)
         return x
     
-    def split_heads_m(self,x):
+    def split_heads(self,x):
         x = self.rs(x)
         return tf.transpose(x, [0, 2, 1, 3])
 
@@ -150,9 +150,9 @@ class MHA(tf.keras.layers.Layer):
             y = self.conv_cross_inp(y)
             k_c, v_c = tf.split(y, 2, 2)
             
-            k_c = self.split_heads_m(k_c)
-            v_c = self.split_heads_m(v_c)
-            q_c = self.split_heads_m(q_c)
+            k_c = self.split_heads(k_c)
+            v_c = self.split_heads(v_c)
+            q_c = self.split_heads(q_c)
             
             a2 = self.multihead_attn(q_c, k_c, v_c)
             a2 = self.merge_heads(a2) 
@@ -162,9 +162,9 @@ class MHA(tf.keras.layers.Layer):
         else:
             c = self.conv_inp(x)
             q, k, v = tf.split(c, 3, axis=2) 
-            q = self.split_heads_m(q)
-            k = self.split_heads_m(k)
-            v = self.split_heads_m(v)
+            q = self.split_heads(q)
+            k = self.split_heads(k)
+            v = self.split_heads(v)
             
             if past is not None:
                 pk, pv = tf.unstack(past, axis=1)
