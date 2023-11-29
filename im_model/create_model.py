@@ -1,6 +1,6 @@
 import tensorflow as tf
-# import sys
-# sys.path.append(".")
+import sys
+sys.path.append(".")
 from model import models as md
 
 def create_model(efficient_net = None,hparams = None,emb_train = False,train = True,n_spe = 1,img_size = (250,250),encoder_layers = 2,encoder_head = 12):
