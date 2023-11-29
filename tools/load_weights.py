@@ -74,7 +74,6 @@ def load_hdf5(model,hdf5_path = ""):
                         decoder.weights[i].assign(tf.expand_dims(hdf5[str(c_var)],axis = 0))
                     except:
                         decoder.weights[i].assign(tf.squeeze(hdf5[str(c_var)],axis = [0]))
-                print(c)
                 c = c +1
 
     print("weights assigned: " + str(c) + "/" + str(len(hdf5)))
