@@ -5,6 +5,8 @@ import sys
 from math import floor
 from trainer import metrics
 import random
+sys.path.append("..")
+from tools import encoder
 
 def tok(txt, start = 50257,end = 50256,seq_max = 1,enc = None):
     # for el in txt:
@@ -21,11 +23,11 @@ def tok(txt, start = 50257,end = 50256,seq_max = 1,enc = None):
     return tok, np.array(mask)
 
 @tf.function(jit_compile=True)
-def train_step(inp,model_final,optimizer,batch_size,seq_max):
+def train_step(inp,model_final,optimizer,batch_size,seq_max,past):
 
     with tf.GradientTape(persistent = False ) as tape:
 
-      H = model_final((inp[0],inp[1]) ,training=True) 
+      H = model_final((inp[0],inp[1],past) ,training=True) 
     
       # Compute the loss value for this minibatch.
       l1 = metrics.lm_loss(inp[1],H[0]['logits'],inp[2])
@@ -56,7 +58,10 @@ class CSVInputIterator(object):
         self.start = start
         self.end = end
         self.seq_max = seq_max
-        self.enc = enc
+        if enc.__class__.__name__ != 'Encoder':
+            self.enc = encoder.dummy_tok(enc)
+        else:
+            self.enc = enc
 
     def __iter__(self):
         order = list(range(len(self.csv)))
@@ -86,10 +91,10 @@ class CSVInputIterator(object):
         return self.data_set_len
 
 
-def train_ds(batch_size = 32,seq_max = 70,start = 50257,end = 50256,folder = "",csv = "",encoder = None,text_column = "",file_column = "", image_size = (256,256),shuffle = True):
+def train_ds(batch_size = 32,seq_max = 70,start = 50257,end = 50256,folder = "",csv_df = None,encoder = None,text_column = "",file_column = "", image_size = (256,256),shuffle = True):
     
     
-    csvii = CSVInputIterator(batch_size, folder, shuffle=shuffle,csv_df = csv,image_size = image_size,text_column = text_column,
+    csvii = CSVInputIterator(batch_size, folder, shuffle=shuffle,csv_df = csv_df,image_size = image_size,text_column = text_column,
                              file_column = file_column , start = start,end = end,seq_max = seq_max,enc = encoder)
     max_len = csvii.size
     max_len = max_len/batch_size
@@ -101,14 +106,20 @@ def train_ds(batch_size = 32,seq_max = 70,start = 50257,end = 50256,folder = "",
     return ds,floor(max_len)
 
 
-def train(steps,optimizer,ds,model,max_steps):
-        
+def train(optimizer,ds,model,steps = None):
+    l,ds = ds
+    if steps is None:
+        steps = l
     l_cum = np.zeros(25)
     l_acc = np.zeros(25)
+    batch = next(iter(ds))
+    past = model._past_
+    past = tf.repeat(past,repeats=batch[1].shape[0], axis=0)
+    assert steps <= l, "steps exceeds number of samples"
     
     for step, x_batch in enumerate(ds):
         
-        l1,acc = train_step(inp = x_batch,optimizer = optimizer,model_final = model,batch_size = x_batch[1].shape[0],seq_max = x_batch[1].shape[1])
+        l1,acc = train_step(inp = x_batch,optimizer = optimizer,model_final = model,batch_size = x_batch[1].shape[0],seq_max = x_batch[1].shape[1],past = past)
         # if nan:
         #     break
         l_acc[0] = acc
@@ -121,3 +132,4 @@ def train(steps,optimizer,ds,model,max_steps):
             break
     
     return
+

@@ -1,12 +1,6 @@
 import tensorflow as tf
 
 
-def shape_list(x):
-    ps = tf.shape(x)
-    ts = tf.shape(x)
-    return [ts[i] if ps[i] is None else ps[i] for i in range(len(ps))]
-
-
 class norm(tf.keras.layers.Layer):
   def __init__(self, 
                axis = [-1],
@@ -50,7 +44,6 @@ class conv1d(tf.keras.layers.Layer):
 
     def build(self, x):
         self.nx = x[-1]
-        self.len = x[1]
         self.w = self.add_weight("w/"+str(self.name_), 
                                  shape = [1, self.nx, self.nf], 
                                  initializer = self.w_init,trainable = self.train)
@@ -58,14 +51,15 @@ class conv1d(tf.keras.layers.Layer):
                                  shape = [self.nf], 
                                  initializer = self.b_init,trainable = self.train)
         
-        
     def call(self, x):
-        c = tf.einsum('ble,reo->blo', x, self.w)+self.b
-        #einsum sometimes slower on tf
-        # x = tf.reshape(x, [-1, self.nx])
-        # w = tf.reshape(self.w, [-1, self.nf])
-        # m = tf.matmul(x,w)+self.b
-        # c = tf.reshape(m,[-1,self.len,self.nf])
+        if self.train:
+            c = tf.einsum('ble,reo->blo', x, self.w)+self.b
+        else:
+            x_s = tf.shape(x)[:-1]
+            x = tf.reshape(x, [-1, self.nx])
+            w = tf.reshape(self.w, [-1, self.nf])
+            m = tf.matmul(x, w)+self.b
+            c = tf.reshape(m, tf.concat([x_s,[self.nf]],axis = 0))
         return c
 
 
@@ -99,7 +93,10 @@ class MHA(tf.keras.layers.Layer):
         assert self.key_dim % self.num_heads == 0, "K/Q dimension not divisible by number of heads"
         
     def build(self, x, y = None):
-
+        
+        self.rs = tf.keras.layers.Reshape((-1,self.num_heads,int(self.key_dim/self.num_heads)))
+        self.rs_merge = tf.keras.layers.Reshape((-1,self.key_dim))
+        
         if self.cross:
             self.conv_cross_inp = conv1d(nf = self.key_dim*2, train = self.train,name_ = self.name_+str("_cross_inp"))
             self.conv_cross_out = conv1d(nf = self.key_dim, train = self.train,name_ = self.name_+str("_cross_out"))
@@ -115,7 +112,8 @@ class MHA(tf.keras.layers.Layer):
         return tf.cast(m, dtype)
     
     def mask_attn_weights(self,w):
-        _, _, nd, ns = shape_list(w)
+        ns = tf.shape(w)[-1]
+        nd = tf.shape(w)[-2]
         b = self.attention_mask(nd, ns, dtype=w.dtype)
         b = tf.reshape(b, [1, 1, nd, ns])
         w = w*b - tf.cast(1e10, w.dtype)*(1-b)
@@ -123,11 +121,7 @@ class MHA(tf.keras.layers.Layer):
     
     def merge_heads(self,x):
         # Reverse of split_heads
-        return self.merge_states(tf.transpose(x, [0, 2, 1, 3]))
-    
-    def merge_states(self,x):
-        *start, a, b = shape_list(x)
-        return tf.reshape(x, start + [a*b])
+        return self.rs_merge(tf.transpose(x, [0, 2, 1, 3]))
 
     def multihead_attn(self,q, k, v):
         # q, k, v have shape [batch, heads, sequence, features]
@@ -145,14 +139,9 @@ class MHA(tf.keras.layers.Layer):
             x = tf.nn.dropout(x, drop)
         return x
     
-    def split_states(self,x, n):
-        x_shape = shape_list(x)
-        m = x_shape[-1]
-        new_x_shape = x_shape[:-1]+[n, m//n]
-        return tf.reshape(x, new_x_shape)
-    
-    def split_heads(self,x, n):
-        return tf.transpose(self.split_states(x, n), [0, 2, 1, 3])
+    def split_heads_m(self,x):
+        x = self.rs(x)
+        return tf.transpose(x, [0, 2, 1, 3])
 
     def call(self, x, y = None,past = None):
         if self.cross:
@@ -161,9 +150,9 @@ class MHA(tf.keras.layers.Layer):
             y = self.conv_cross_inp(y)
             k_c, v_c = tf.split(y, 2, 2)
             
-            k_c = self.split_heads(k_c, self.num_heads)
-            v_c = self.split_heads(v_c, self.num_heads)
-            q_c = self.split_heads(q_c, self.num_heads)
+            k_c = self.split_heads_m(k_c)
+            v_c = self.split_heads_m(v_c)
+            q_c = self.split_heads_m(q_c)
             
             a2 = self.multihead_attn(q_c, k_c, v_c)
             a2 = self.merge_heads(a2) 
@@ -173,9 +162,9 @@ class MHA(tf.keras.layers.Layer):
         else:
             c = self.conv_inp(x)
             q, k, v = tf.split(c, 3, axis=2) 
-            q = self.split_heads(q, self.num_heads)
-            k = self.split_heads(k, self.num_heads)
-            v = self.split_heads(v, self.num_heads)
+            q = self.split_heads_m(q)
+            k = self.split_heads_m(k)
+            v = self.split_heads_m(v)
             
             if past is not None:
                 pk, pv = tf.unstack(past, axis=1)

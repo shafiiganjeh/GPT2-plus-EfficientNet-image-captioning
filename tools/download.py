@@ -3,7 +3,7 @@ import sys
 import requests
 from tqdm import tqdm
 
-def download(model = "124M",folder = "/Files"):
+def download(model = "124M",folder = "./Files"):
 
     subdir = os.path.join(str(folder) +'/models', model)
     if not os.path.exists(subdir):
@@ -23,3 +23,4 @@ def download(model = "124M",folder = "/Files"):
                     f.write(chunk)
                     pbar.update(chunk_size)
     return
+
