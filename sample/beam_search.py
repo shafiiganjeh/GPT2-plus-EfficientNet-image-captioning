@@ -49,7 +49,8 @@ def beam_sample(model,context,encoder,
     bos = tf.expand_dims(([bos]), 0)
     prev = tf.repeat(bos,beams,axis = 0)
     output = tf.repeat(bos,1,axis = 0).numpy()
-    past = None
+    past = model.past
+    past = tf.repeat(past,beams,axis = 0)
     y = tf.repeat(context,beams,axis = 0)
     probs = np.ones(beams,np.float64)
     

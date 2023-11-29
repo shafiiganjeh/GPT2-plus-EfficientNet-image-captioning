@@ -51,7 +51,8 @@ def sample_sequence(model,context,encoder,
     bos = tf.expand_dims(([bos]), 0)
     prev = bos
     output = bos
-    past = None
+    past = model.past
+    
     for i in tqdm(range(seq_len)):
         res = model(x = prev,y = context, past=past)
         logits = res['logits']

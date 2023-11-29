@@ -7,14 +7,15 @@ import tensorflow as tf
 import nvidia.dali.plugin.tf as dali_tf
 import sys
 from trainer import metrics
-
+sys.path.append("..")
+from tools import encoder
 
 @tf.function(jit_compile=True)
-def train_step(inp,model_final,optimizer,batch_size,seq_max):
+def train_step(inp,model_final,optimizer,batch_size,seq_max,past):
 
     with tf.GradientTape(persistent = False ) as tape:
 
-      H = model_final((inp[0],inp[1]) ,training=True) 
+      H = model_final((inp[0],inp[1],past ),training=True) 
     
       # Compute the loss value for this minibatch.
       l1 = metrics.lm_loss(inp[1],H[0]['logits'],inp[2])
@@ -29,6 +30,10 @@ def train_step(inp,model_final,optimizer,batch_size,seq_max):
 
 def train_ds(batch_size = 32,seq_max = 70,start = 50257,end = 50256,dataset_list = None,
              image_label = "jpg",txt_label = "txt",shuffle  = True,encoder = None,img_size = (256,256)):
+    
+    if encoder.__class__.__name__ != 'Encoder':
+        encoder = encoder.dummy_tok(encoder)
+    
     try:
         pipe = Pipeline(batch_size=batch_size, num_threads=4, device_id=0)
         with pipe:
@@ -81,14 +86,20 @@ def train_ds(batch_size = 32,seq_max = 70,start = 50257,end = 50256,dataset_list
 
 
 def train(steps,optimizer,ds,model):
-        
+    
+    batch = next(iter(ds))
+    past = model._past_
+    past = tf.repeat(past,repeats=batch[1].shape[0], axis=0)
+    
     l_cum = np.zeros(25)
     l_acc = np.zeros(25)
     
     for step, dali in enumerate(ds):
+        
         a,b = tf.unstack(dali[1],axis = 1)
         x_batch = [dali[0],a,b]
-        l1,acc = train_step(x_batch,optimizer = optimizer,model_final = model,batch_size = x_batch[1].shape[0],seq_max = x_batch[1].shape[1])
+        
+        l1,acc = train_step(x_batch,optimizer = optimizer,model_final = model,batch_size = x_batch[1].shape[0],seq_max = x_batch[1].shape[1],past = past)
         # if nan:
         #     break
         l_acc[0] = acc

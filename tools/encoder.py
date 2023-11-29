@@ -115,3 +115,30 @@ def get_encoder(model_name, models_dir):
         encoder=encoder,
         bpe_merges=bpe_merges,
     )
+
+def get_encoder_from_file(encoder_json, vocab_bpe):
+    with open(encoder_json, 'r') as f:
+        encoder = json.load(f)
+    with open(vocab_bpe, 'r', encoding="utf-8") as f:
+        bpe_data = f.read()
+    bpe_merges = [tuple(merge_str.split()) for merge_str in bpe_data.split('\n')[1:-1]]
+    return Encoder(
+        encoder=encoder,
+        bpe_merges=bpe_merges,
+    )
+
+class dummy_tok():
+    def __init__(self,tokenizer):
+        self.tokenizer = tokenizer
+        
+    def encode(self,dt):
+        f = self.tokenizer(dt)
+        try:
+            f = f['input_ids']
+            return  f
+        except:
+            f = next(iter(f.items()))[1]
+            assert type(f) == list, "can not recognize tokenizer"
+            return  f
+
+
