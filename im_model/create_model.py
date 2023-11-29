@@ -4,6 +4,11 @@ sys.path.append(".")
 from model import models as md
 
 def create_model(efficient_net = None,hparams = None,emb_train = False,train = True,n_spe = 1,img_size = (250,250),encoder_layers = 2,encoder_head = 12):
+
+    try:
+        hparams["n_vocab"] = hparams["vocab_size"]
+    except:
+        pass
     
     inp_x = tf.keras.Input(shape=(None,),dtype=tf.int32)
     inp_img = tf.keras.Input(shape=(*img_size,3))
