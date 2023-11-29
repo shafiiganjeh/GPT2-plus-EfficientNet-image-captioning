@@ -107,7 +107,7 @@ def train_ds(batch_size = 32,seq_max = 70,start = 50257,end = 50256,folder = "",
 
 
 def train(optimizer,ds,model,steps = None):
-    l,ds = ds
+    ds,l = ds
     if steps is None:
         steps = l
     l_cum = np.zeros(25)
