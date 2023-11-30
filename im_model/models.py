@@ -1,5 +1,4 @@
 import tensorflow as tf
-import tensorflow_models as tfm
 from tensorflow.keras import backend as K
 import sys
 sys.path.append("..")
@@ -116,7 +115,7 @@ class encoder(tf.keras.Model):
         
         self.norm_inp = tf.keras.layers.GroupNormalization()
 
-        self.pos = tfm.nlp.layers.PositionEmbedding(n_ctx+2)
+        self.pos = l.PositionEmbedding(n_ctx+2)
 
         for i in range(self.n_layer ):
             self._block[i] = l.block(train = self.train,n_head = self.n_head,
