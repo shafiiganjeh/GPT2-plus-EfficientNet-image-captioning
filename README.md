@@ -9,7 +9,8 @@ GPT2-plus-EfficientNet-image-captioning lets you combine any EfficientNet model 
 
 
 ## How to use:
-## (Work in Progress)
+ Quickstart on <a href="https://colab.research.google.com/drive/1PpMtwdCvtiRbrSlYAPCZB51TuI9KYYDg#scrollTo=zczT30A47x-i&uniqifier=1"> google colab</a> .
+
 
 You can get the GPT2 weights either from <a href="https://huggingface.co/gpt2"> 🤗</a> and use tools.load_hdf5 (config.json = hparams.json) or you can get the original weights from <a href="https://github.com/openai/gpt-2/blob/master/download_model.py"> OpenAi</a> and use tools.load.
 
@@ -39,7 +40,23 @@ On regular data, both models perform fairly well, the smaller model even outperf
 |m1: A pair of tanks are parked on a grassy field.|m1 :A group of men playing basketball on a basketball court.|m1: A group of people standing around a birthday cake with candles.|
 |m2: A large army tank is parked in a field.|m2: A group of men playing a game of basketball.|m2: A group of people standing around a cake. |
 ## Pretrained models:
-## (will be uploaded to google drive)
+
+model.1 checkpoint on cc3m+coco:
+
+<a href="https://drive.google.com/file/d/1CaiCE9TG-TIl2lEl8zQK7u9yJU6ek6RR/view?usp=sharing"> model.1 encoder </a>  
+<a href="https://drive.google.com/file/d/143ACIbCT_ocSDoq0LtyRmZn7WRAJmbRq/view?usp=sharing">model.1 decoder </a> 
+
+model.2 checkpoint on cc3m:
+
+<a href="https://drive.google.com/file/d/1piNJ5bU7JgHF0M3k-R07pp4x9dGhV7su/view?usp=sharing"> model.2 encoder </a>  
+<a href="https://drive.google.com/file/d/1FE4COJkkXolaDp4R0B-I_KNXHO235mY3/view?usp=sharing">model.2 decoder </a> 
+
+model.2 checkpoint on cc3m+mscoco:
+
+<a href="https://drive.google.com/file/d/1KS-xKfomTvtDvc2qX4e0kPN1KcgVbShl/view?usp=sharing"> model.2 encoder </a>  
+<a href="https://drive.google.com/file/d/1Eb_sK8yP7uLOy_G-kxf8AYbZDFcZUpab/view?usp=sharing">model.2 decoder </a> 
+
+
 
 ## Some technical details:
 
