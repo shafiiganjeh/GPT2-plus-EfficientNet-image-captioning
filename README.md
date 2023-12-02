@@ -9,7 +9,7 @@ GPT2-plus-EfficientNet-image-captioning lets you combine any EfficientNet model 
 
 
 ## How to use:
- Quickstart on <a href="https://colab.research.google.com/drive/1PpMtwdCvtiRbrSlYAPCZB51TuI9KYYDg#scrollTo=zczT30A47x-i&uniqifier=1"> google colab</a> .
+ Quickstart on <a href="https://colab.research.google.com/drive/1PpMtwdCvtiRbrSlYAPCZB51TuI9KYYDg?usp=sharing"> google colab</a> .
 
 
 You can get the GPT2 weights either from <a href="https://huggingface.co/gpt2"> 🤗</a> and use tools.load_hdf5 (config.json = hparams.json) or you can get the original weights from <a href="https://github.com/openai/gpt-2/blob/master/download_model.py"> OpenAi</a> and use tools.load.
