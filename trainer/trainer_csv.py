@@ -106,7 +106,7 @@ def train_ds(batch_size = 32,seq_max = 70,start = 50257,end = 50256,folder = "",
     return ds,floor(max_len)
 
 
-def train(optimizer,ds,model,steps = None):
+def train(optimizer,ds,model,steps = None,epochs = 1):
     ds,l = ds
     if steps is None:
         steps = l
@@ -116,20 +116,20 @@ def train(optimizer,ds,model,steps = None):
     past = model._past_
     past = tf.repeat(past,repeats=batch[1].shape[0], axis=0)
     assert steps <= l, "steps exceeds number of samples"
-    
-    for step, x_batch in enumerate(ds):
-        
-        l1,acc = train_step(inp = x_batch,optimizer = optimizer,model_final = model,batch_size = x_batch[1].shape[0],seq_max = x_batch[1].shape[1],past = past)
-        # if nan:
-        #     break
-        l_acc[0] = acc
-        l_cum[0] = tf.reduce_mean(l1)
-        l_cum = np.roll(l_cum, 1)
-        l_acc = np.roll(l_acc, 1)
+    for e in range(epochs):
+        for step, x_batch in enumerate(ds):
+            if step == steps:
+                break
             
-        sys.stdout.write('\r'+("step: " +str(step+1) + "/" + " loss: " + str(np.sum(l_cum)/25)+ " acc: " + str(np.sum(l_acc)/25) + "   "))
-        if step > steps:
-            break
-    
+            l1,acc = train_step(inp = x_batch,optimizer = optimizer,model_final = model,batch_size = x_batch[1].shape[0],seq_max = x_batch[1].shape[1],past = past)
+            # if nan:
+            #     break
+            l_acc[0] = acc
+            l_cum[0] = tf.reduce_mean(l1)
+            l_cum = np.roll(l_cum, 1)
+            l_acc = np.roll(l_acc, 1)
+                
+            sys.stdout.write('\r'+("epoch: " +str(e+1) + " step: " +str(step+1) + "/" + " loss: " + str(np.sum(l_cum)/25)+ " acc: " + str(np.sum(l_acc)/25) + "   "))
+        print("epoch: " +str(e+1) + " step: " +str(step+1) + "/" + " loss: " + str(np.sum(l_cum)/25)+ " acc: " + str(np.sum(l_acc)/25) + "   ")
     return
 

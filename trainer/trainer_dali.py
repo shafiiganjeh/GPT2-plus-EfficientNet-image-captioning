@@ -8,7 +8,7 @@ import nvidia.dali.plugin.tf as dali_tf
 import sys
 from trainer import metrics
 sys.path.append("..")
-from tools import encoder
+from tools import encoder as enc
 
 @tf.function(jit_compile=True)
 def train_step(inp,model_final,optimizer,batch_size,seq_max,past):
@@ -32,7 +32,8 @@ def train_ds(batch_size = 32,seq_max = 70,start = 50257,end = 50256,dataset_list
              image_label = "jpg",txt_label = "txt",shuffle  = True,encoder = None,img_size = (256,256)):
     
     if encoder.__class__.__name__ != 'Encoder':
-        encoder = encoder.dummy_tok(encoder)
+        encoder = enc.dummy_tok(encoder)
+
     
     try:
         pipe = Pipeline(batch_size=batch_size, num_threads=4, device_id=0)
